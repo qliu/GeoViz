@@ -1,0 +1,1276 @@
+{% load staticfiles %}
+{% load custom_filter %}{% load custom_tag %}
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href='{% static "img/du_favicon.ico" %}'>
+
+    <title>Remote Visualization</title>
+    <!-- 3rd party CSS -->
+    <link href='{% static "3rdparty/bootstrap-3.3.0/css/bootstrap.min.css" %}' rel="stylesheet"/>
+    <link href='{% static "3rdparty/font-awesome-4.2.0/css/font-awesome.min.css" %}' rel="stylesheet"/>
+    <link href='{% static "3rdparty/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css" %}' rel="stylesheet">
+
+    <!-- Base CSS -->
+    <link href='{% static "css/main.css" %}' rel="stylesheet"/>
+    <link href='{% static "css/base.css" %}' rel="stylesheet"/>
+    
+    <!-- World Wind CSS -->
+    <link href='{% static "worldwind/Examples.css" %}' rel="stylesheet"/>
+	<!--
+    <link href='{% static "worldwind/LayerManager/LayerManager.css" %}' rel="stylesheet"/>
+	-->
+    
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src='{% static "3rdparty/html5shiv-3.7.2/html5shiv.min.js" %}'></script>
+        <script src='{% static "3rdparty/respond.js/respond.min.js" %}'></script>
+    <![endif]-->    
+    </head>
+
+    <body onbeforeunload="stop()" onunload="stop()" class="page">
+        <nav id="banner" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <!--<img src='{% static "img/du_logo.png" %}' class="navbar-logo">-->
+                    <a class="navbar-brand" href="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    GeoViz &nbsp;-&nbsp; A Cloud-enabled Remote Visualization Tool for Distributed Time-varying Climate Data Analytics</a>
+                </div>
+            </div>
+        </nav>
+
+		<!-- Main Content -->
+        <div class="row">
+            <!-- Left Side Panel -->
+            <div id="side-bar-left" class="col-sm-3 col-md-3 col-lg-3 controls panel-row">
+				<!-- Layer Control -->
+				<div id="panel-datalist" class="panel panel-default root-panel">
+					<div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" href="#collapseDataList" class="accordion-toggle">
+                                <img src='{% static "img/icon_layer.png" %}' width="21px" height="21px"> Layer Control
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseDataList" class="panel-collapse collapse">
+						<div id="treeDataList"></div>
+						<!-- Base Layer -->
+						<!-- comment for now, add functions to data tree later 
+						<label>              
+							Base Layer&nbsp;&nbsp;
+							<select id="sel-baselayer">
+								<option value="0" selected>Blue Marble</option>
+								<option value="1">Blue Marble & Landsat</option>
+								<option value="2">Bing Aerial with Labels</option>
+								<option value="3">Earth Lights</option>
+								<option value="4">Bathymetry</option>
+							</select>
+						</label>
+						<br/><br/>
+						-->
+					</div>
+				</div>
+				<!-- End of Layer Control -->
+				
+                <!-- Visualization Control -->
+                <div id="panel-dataprop" class="panel panel-default root-panel">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" href="#collapseLayerControl" class="accordion-toggle">
+                                <i class="fa fa-globe fa-lg"></i> Visualization Control
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseLayerControl" class="panel-collapse collapse">
+                        <div class="panel-body">
+							<ul class="nav nav-tabs">
+                                <li class="active"><a href="#viz2d" data-toggle="tab">2D</a>
+                                </li>
+                                <li><a href="#viz3dray" data-toggle="tab">RayCasting</a>
+                                </li>
+                                <li><a href="#viz3diso" data-toggle="tab">IsoSurface</a>
+                                </li>
+                                <li><a href="#viz3dflow" data-toggle="tab">Streamflow</a>
+                                </li>
+                            </ul>
+
+                            <!-- Tab panes -->
+                            <div class="tab-content">
+								<!-- 2D Vis -->
+                                <div class="tab-pane fade in active" id="viz2d">
+									<!-- comment for now, move check function to tab in active
+                                    <label>
+										<input id="check-layer-dust2d" type="checkbox">
+										2D Layer
+									</label>
+									-->
+									<br/>
+									<table class="table">
+										<tbody>
+											<!-- 2D Variables -->
+											<tr>
+												<td>
+													<label>
+														2D Display Variable&nbsp;&nbsp;
+														<select id="var-seq" ></select>
+													</label>
+												</td>
+											</tr>
+											<!-- End of 2D Variables -->
+											
+											<!-- Opacity Slider -->
+											<tr>
+												<td>
+													<label>
+														Opacity <span id="2d-opacity-text">0.8</span>
+													</label>
+													<input id="2d-opacity" disabled type="range" min=0 max=1 step=0.1 value=0.8>
+												</td>
+											</tr>
+											<!-- End of Opacity Slider -->
+											
+											<!-- Button: Render & Remove 2D Layer -->
+											<tr>
+												<td colspan=2>
+													<button id="btn-2d-render" type="button" class="btn btn-primary btn-sm btn-block vis-control disabled">Load 2D Data</button>&nbsp;
+												</td>
+												<td class="pull-right">
+													<button id="btn-2d-remove" type="button" class="btn btn-danger btn-sm disabled">Remove</button>
+												</td>
+											</tr>
+											<!-- End of Button: Render & Remove 2D Layer -->
+											
+											<!-- Toggle 2D Animation -->
+											<!--
+											<tr>
+												<td>
+													<label>
+														<input id="check-layer-dust2d-animation" type="checkbox">
+														<i class="fa fa-video-camera fa-sm"></i> 2D Animation 
+													</label>
+												</td>
+											</tr>
+											-->
+											<!-- End of Toggle 2D Animation -->
+											
+											<!-- 2D Animation Control -->
+											<tr>
+												<td colspan=3>
+													<div class="panel panel-default">
+														<div class="panel-heading">
+															Animation Control
+														</div>
+														<div class="panel-body">
+															<label class="pull-left">Time point: <span id="range-2d-animation-text">0</span></label>
+															<input id="range-2d-animation" class="time-slider" disabled type="range" min=0 max=24 step=1 value=0>
+															<br/>
+															<!--
+															<button id="btn-2d-animation" type="button" class="btn btn-warning pull-left vis-control disabled">Load Animation</button>
+															-->
+															<div class="pull-right">
+																<button type="button" id="btn-2dtimeplay" class="btn btn-success disabled"><i class="fa fa-play fa-lg"></i></button>
+																<button type="button" id="btn-2dtimepause" class="btn btn-default disabled"><i class="fa fa-pause fa-lg"></i></button>
+															</div>
+														</div>
+													</div>
+												</td>
+											</tr>
+											<!-- End of 2D Animation Control -->
+											
+											<!-- 2D Animation Control Slider -->
+											<!--
+											<tr>
+												<td>
+													<div class="panel panel-default">
+														<div class="panel-heading">
+															Animation Control
+														</div>
+														<div class="panel-body">
+															<label>
+																Time point: <span id="range-2d-animation-text">0</span>
+															</label>
+															<input id="range-2d-animation" type="range" min=0 max=24 step=1 value=0>
+															<br/>
+															<div class="pull-right">
+																<button type="button" id="btn-2dtimeplay" class="btn btn-success disabled"><i class="fa fa-play fa-lg"></i></button>
+																<button type="button" id="btn-2dtimepause" class="btn btn-default disabled"><i class="fa fa-pause fa-lg"></i></button>
+															</div>
+														</div>
+													</div>
+												</td>
+											</tr>
+											-->
+											<!-- End of 2D Animation Control Slider -->											
+										</tbody>
+									</table>
+									
+									<!-- check this function later -->
+									<!-- Alert Message: if 2D Animation is not checked, can't play 2D animation -->
+									<div id="alert2d" class="alert alert-danger alert-dismissable" style="display:none;">
+										<button type="button" class="close" onclick="$('.alert').hide()">&times;</button>
+										2D Dust Animation Layer is off.
+									</div>
+									<!-- End of Alert Message -->
+                                </div>
+								<!-- End of 2D Vis -->
+								
+								<!-- RayCasting Rendering -->
+								<div class="tab-pane fade" id="viz3dray">
+									<br/>
+									<table class="table">
+										<tbody>
+											<!-- 3D Variables -->
+											<tr>
+												<td>
+													<label>
+														3D Variable&nbsp;&nbsp;
+														<select id="var-seq-3d-ray"></select>
+													</label>
+												</td>
+											</tr>
+											<!-- End of 3D Variables -->
+											
+											<!-- RayCasting Color Picker -->
+											<tr>
+												<td>
+													<label class="pull-left"><i class="fa fa-tint fa-lg"></i> Color&nbsp;&nbsp;</label>
+													<div id="colorpicker-ray" class="col-xs-8 input-group colorpicker-component">
+														<input id="color-ray" type="text" value="#BE9C46" class="form-control">
+														<span class="input-group-addon"><i></i></span>
+												</div>
+												</td>
+											</tr>
+											<!-- End of RayCasting Color Picker -->
+											
+											<!-- Button: Render & Remove RayCasting Layer -->
+											<tr>
+												<td colspan=2>
+													<button id="btn-ray-render" type="button" class="btn btn-primary btn-sm btn-block vis-control disabled">Render</button>&nbsp;
+												</td>
+												<td class="pull-right">
+													<button id="btn-ray-remove" type="button" class="btn btn-danger btn-sm disabled">Remove</button>
+												</td>
+											</tr>
+											<!-- End of Button: Render & Remove RayCasting Layer -->
+											
+											<!-- Toggle RayCasting 3D Animation -->
+											<!--
+											<tr>
+												<td>
+													<label>
+														<input id="check-layer-dust3d-animation" type="checkbox">
+														<i class="fa fa-video-camera fa-sm"></i> 3D Animation
+													</label>
+												</td>
+											</tr>
+											-->
+											<!-- End of RayCasting Toggle 3D Animation -->
+											
+											<!-- RayCasting Animation Control -->
+											<tr>
+												<td colspan=3>
+													<div class="panel panel-default">
+														<div class="panel-heading">
+															Animation Control
+														</div>
+														<div class="panel-body">
+															<label class="pull-left">Time point: <span id="range-3d-animation-text">8</span></label>
+															<input id="range-3d-animation" class="time-slider" type="range" min=0 max=24 step=1 value=8>
+															<br/>
+															<button id="btn-ray-animation" type="button" class="btn btn-success pull-left vis-control disabled">Load Animation</button>
+															<div class="pull-right">
+																<button type="button" id="btn-timeplay" class="btn btn-success disabled"><i class="fa fa-play fa-lg"></i></button>
+																<button type="button" id="btn-timepause" class="btn btn-default disabled"><i class="fa fa-pause fa-lg"></i></button>
+															</div>
+														</div>
+													</div>
+												</td>
+											</tr>
+											<!-- End of RayCasting Animation Control -->
+											
+											<!-- RayCasting Animation Control -->
+											<!--
+											<tr>
+												<td>
+													<div class="panel panel-default">
+														<div class="panel-heading">
+															Animation Control
+														</div>
+														<div class="panel-body">
+															<label>
+																Time point: <span id="range-3d-animation-text">0</span>
+															</label>
+															<input id="range-3d-animation" type="range" min=0 max=24 step=1 value=0>
+															<br/>
+															<div class="pull-right">
+																<button type="button" id="btn-timeplay" class="btn btn-success disabled"><i class="fa fa-play fa-lg"></i></button>
+																<button type="button" id="btn-timepause" class="btn btn-default disabled"><i class="fa fa-pause fa-lg"></i></button>
+															</div>
+														</div>
+													</div>
+												</td>
+											</tr>
+											-->
+											<!-- End of RayCasting Animation Control -->
+										</tbody>
+									</table>
+									
+									<!-- comment for now, move this function to tab in active later
+									<label>
+										<input id="check-layer-dust3d" type="checkbox">
+										3D Layer
+									</label>
+									-->									
+								</div>
+								<!-- End of RayCasting Rendering -->
+								
+								<!-- IsoSurface Rendering -->
+								<div class="tab-pane fade" id="viz3diso">
+									<br/>
+									<table class="table">
+										<tbody>
+											<!-- 3D Variables -->
+											<tr>
+												<td class="pull-right">
+													<label class="pull-left">
+														3D Variable&nbsp;
+													</label>
+												</td>
+												<td>
+													<select id="var-seq-3d-iso"></select>
+												</td>
+											</tr>
+											<!-- End of 3D Variables -->
+											
+											<!-- Input: Iso Value -->
+											<tr>
+												<td class="pull-right">
+													<label>
+														Iso Value&nbsp;
+													</label>
+												</td>
+												<td>
+													<input id="isovalue" placeholder="Enter Iso value">&nbsp;
+												</td>
+											</tr>
+											<!-- End of Input: Iso Value -->
+											
+											<!-- Input: Int Range -->
+											<tr>
+												<td class="pull-right">
+													<label>
+														Intrange&nbsp;
+													</label>
+												</td>
+												<td>
+													<input id="intrange" placeholder="Enter intrange">&nbsp;
+												</td>
+											</tr>
+											<!-- End of Input: Int Range -->
+											
+											<!-- Button: Render & Remove IsoSurface Layer -->
+											<tr>
+												<td colspan=2>
+													<button id="btn-iso-render" type="button" class="btn btn-primary btn-sm btn-block vis-control disabled">Render</button>&nbsp;
+												</td>
+												<td class="pull-right">
+													<button id="btn-iso-remove" type="button" class="btn btn-danger btn-sm disabled">Remove</button>
+												</td>
+											</tr>
+											<!-- End of Button: Render & Remove IsoSurface Layer -->
+											
+											<!-- IsoSurface Animatin Control -->
+											<tr>
+												<td colspan=3>
+													<div class="panel panel-default">
+														<div class="panel-heading">
+															Animation Control
+														</div>
+														<div class="panel-body">
+															<label class="pull-left">Time point: <span id="range-3d-iso-text">0</span></label>
+															<input id="range-3d-iso" class="time-slider" type="range" min=0 max=24 step=1 value=4>
+															<br/>
+															<button id="btn-iso-animation" type="button" class="btn btn-warning pull-left vis-control disabled">Load Animation</button>
+															<div class="pull-right">
+																<button type="button" id="btn-iso-timeplay" class="btn btn-success disabled"><i class="fa fa-play fa-lg"></i></button>
+																<button type="button" id="btn-iso-timepause" class="btn btn-default disabled"><i class="fa fa-pause fa-lg"></i></button>
+															</div>
+														</div>
+													</div>
+												</td>
+											</tr>
+											<!-- End of IsoSurface Animatin Control -->
+										</tbody>
+									</table>
+								</div>
+								<!-- End of IsoSurface Rendering -->
+								
+								<!-- Streamflow Rendering -->
+								<div class="tab-pane fade" id="viz3dflow">
+									<br/>
+									<table class="table">
+										<tbody>
+											<!-- Streamflow 3D Variables -->
+											<tr>
+												<td class="pull-right">
+													<label>
+														3D Variable&nbsp;
+													</label>
+												</td>
+												<td>
+													<select id="var-seq-3d-flow"></select>
+												</td>
+											</tr>
+											<!-- End of Streamflow 3D Variables -->
+											
+											<!-- Select: Steamflow Color Ramp -->
+											<tr>
+												<td class="pull-right">
+													<i class="fa fa-tint fa-lg"></i> Color&nbsp;
+												</td>
+												<td>
+													<select id="sel-colorramp" disabled>
+														<option>Color Ramp</option>
+														<option value="ocean">Ocean</option>
+														<option value="BuGn">Blue-Green</option>
+														<option value="jet">Jet</option>
+														<option value="Set3">Set3</option>
+													</select>
+												</td>
+											</tr>
+											<!-- End of Select: Steamflow Color Ramp -->
+											
+											<!-- Select: Streamflow Number of Class -->
+											<tr>
+												<td class="pull-right">
+													Class&nbsp;
+												</td>
+												<td>
+													<select id="sel-colorclass"  disabled>
+														<option>Class</option>
+														<option value="10">10</option>
+														<option value="20">20</option>
+													</select>
+												</td>
+											</tr>
+											<!-- End of Select: Streamflow Number of Class -->
+											
+											<!-- Button: Render & Remove Streamflow Layer -->
+											<tr>
+												<td colspan=2>
+													<button id="btn-flow-render" type="button" class="btn btn-primary btn-sm btn-block vis-control disabled">Render</button>&nbsp;
+												</td>
+												<td>
+													<button id="btn-flow-remove" type="button" class="btn btn-danger btn-sm disabled">Remove</button>
+												</td>
+											</tr>
+											<!-- End of Button: Render & Remove Streamflow Layer -->
+											
+											<!-- Streamflow Animation Control -->
+											<tr>
+												<td colspan=3>
+													<div class="panel panel-default">
+														<div class="panel-heading">
+															Animation Control
+														</div>
+														<div class="panel-body">
+															<label class="pull-left">Time point: <span id="range-3d-flow-text">0</span></label>
+															<input id="range-3d-flow" class="time-slider" disabled type="range" min=0 max=24 step=1 value=0>
+															<br/>
+															<button id="btn-flow-animation" type="button" class="btn btn-warning pull-left vis-control disabled">Load Animation</button>
+															<div class="pull-right">
+																<button type="button" id="btn-flow-timeplay" class="btn btn-success disabled"><i class="fa fa-play fa-lg"></i></button>
+																<button type="button" id="btn-flow-timepause" class="btn btn-default disabled"><i class="fa fa-pause fa-lg"></i></button>
+															</div>
+														</div>
+													</div>
+												</td>
+											</tr>
+											<!-- End of Streamflow Animation Control -->
+										</tbody>
+									</table>
+
+									<!--
+									<label>
+										<input id="check-layer-flow" type="checkbox" disabled>
+										3D Layer
+									</label>
+									-->
+									
+								</div>
+								<!-- End of Streamflow Rendering -->
+							</div>
+							<!-- End of Tab panes -->
+						</div>
+                    </div>
+                </div>
+				<!-- End of Visualization Control -->
+                
+                <!-- Enter Coordinates To Place Marker -->
+                <!--
+                <div class="panel panel-default root-panel">
+                    <div class="panel-heading">
+                        <h4 class="panel-title"><a data-toggle="collapse" href="#collapsePlaceMarker" class="accordion-toggle">
+                            <i class="fa fa-map-marker fa-lg"></i> Place Marker</a>
+                        </h4>  
+                    </div>
+                    <div id="collapsePlaceMarker" class="panel-collapse collapse in">
+                        <div class="panel-body">
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+                                        <label>Lat</label>
+                                        <input id="marker-position-lat" name="camera-position-lat" class="form-control" placeholder="0" autocomplete="off">
+                                    </div>
+                                    <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+                                        <label>Long</label>
+                                        <input id="marker-position-long" name="camera-position-long" class="form-control" placeholder="0" autocomplete="off">
+                                    </div>
+                                    <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+                                        <label>Alt (m)</label>
+                                        <input id="marker-position-alt" name="camera-position-alt" class="form-control" placeholder="0" autocomplete="off">
+                                    </div>
+                                    <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+                                        <br/>
+                                        <button type="button" id="btn-placeMarker" class="btn btn-warning btn-lg btn-block">Add</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            <a type="button" id="btn-download" class="btn btn-warning btn-lg btn-block" href="" download="wwconfig.txt">Download Config</a>
+                            
+                        </div>
+                    </div>
+                </div>
+                -->
+				<!-- End of Enter Coordinates To Place Marker -->
+			</div>
+			<!-- End of Left Side Panel -->
+		
+            <!-- World Wind Window -->
+            <div id="divWorldWindowContainer" class="col-sm-6 col-md-6 col-lg-6" style="background:black">
+                <br/>
+                <div id="globe">
+                    <div id="divWorldWindow" style="position:relative">
+                        <canvas id="canvasOne" width="800" height="800" style="width: 100%; height: auto">
+                            Your browser does not support HTML5 Canvas.
+                        </canvas>
+                    </div>
+                </div>
+            </div>
+			<!-- End of World Wind Window -->
+            
+            <!-- Right side panel -->
+            <div id="side-bar-right" class="col-sm-3 col-md-3 col-lg-3 controls panel-row">
+                <!-- Cloud Configuration -->
+                <div class="panel panel-default panel">
+					<div class="panel-heading">
+                        <h4 class="panel-title"><a data-toggle="collapse" href="#collapseCloud" class="accordion-toggle">
+                            <i class="fa fa-cloud fa-lg"></i> Cloud Configuration</a>
+                        </h4>
+					</div>
+					<div id="collapseCloud" class="panel-collapse collapse in">
+						<div class="panel-body">
+							<!-- Select: Server Region -->
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h4 class="panel-title">
+										<a data-toggle="collapse" href="#collapseRegion"><i class="fa fa-map-marker fa-lg"></i> Server Region</a>
+									</h4>
+								</div>
+								<div id="collapseRegion" class="panel-collapse collapse in">
+									<div class="form-group">
+										<table class="table">
+											<tbody>
+												<tr>
+													<td class="pull-left">
+														<label>Amazon EC2 Region</label>
+													</td>
+													<td class="pull-left">
+														<select id="sel-region">
+														<option value="0">-- Choose a region --</option>
+														<option value="us-west-2">US West (Oregon)</option>
+													  </select>
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+							<!-- End of Select: Server Region -->
+							
+							<!-- Select: Machine Configuration -->
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h4 class="panel-title">
+										<a data-toggle="collapse" href="#collapseMachineConf"><i class="fa fa-gear fa-lg"></i> Machine Configuration</a>
+									</h4>
+								</div>
+								<div id="collapseMachineConf" class="panel-collapse collapse in">
+									<div class="form-group">
+										<table class="table">
+											<tbody>
+												<tr>
+													<td class="pull-left">
+														<label>Instance Type</label>
+													</td>
+													<td class="pull-left">
+														<select id="sel-machineconf">
+														<option value="0">-- Choose a type --</option>
+														<option value="g2.2xlarge">g2.2xlarge</option>
+													  </select>
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+							<!-- End of Select: Machine Configuration -->
+							
+							<!-- Select: Resources Allocation -->
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h4 class="panel-title">
+										<a data-toggle="collapse" href="#collapseResource"><i class="fa fa-sitemap fa-lg"></i> Resources Allocation</a>
+									</h4>
+								</div>
+								<div id="collapseResource" class="panel-collapse collapse in">
+									<div class="form-group">
+										<table class="table">
+											<tbody>
+												<!--
+												<tr>
+													<td class="pull-left">
+														<label>Number of Task</label><br/>
+													</td>
+													<td class="pull-left">
+														<select id="sel-numtask">
+															<option>-- Choose a number --</option>
+															<option value="1">1</option>
+															<option value="4">4</option>
+															<option value="9">9</option>
+															<option value="16">16</option>
+														</select>
+													</td>
+												</tr>
+												-->
+												<tr>
+													<td class="pull-left">
+														<label>Number of GPU</label>
+													</td>
+													<td class="pull-left">
+													  <select id="sel-numgpu">
+														<option value="0">-- Choose a number --</option>
+														<option value="1">1</option>
+														<option value="2">2</option>
+														<option value="4">4</option>
+													  </select>
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+							<!-- End of Select: Resources Allocation -->
+							
+							<!-- Scheduling Tesing -->
+							<!--<input id="txt-node-sequence" class="form-control" placeholder="Type in sequence here. Separate with comma."><br/>-->
+							<!-- End of Scheduling Tesing -->
+							
+							<!-- Download Config File -->
+							<!--<a id="btn-downloadconfig" type="button" class="btn btn-primary btn-lg btn-block">Download Config</a>-->
+							<!-- End of Download Config File -->
+							
+							<!-- Hidden inputs for request variables -->
+							<input id="url-loaddata" type="hidden" value="{% setting 'ROOT_APP_URL' %}/loaddata/"></input>
+							<input id="url-getopendap" type="hidden" value="{% setting 'ROOT_APP_URL' %}/getopendap/"></input>
+							<input id="url-startcluster" type="hidden" value="{% setting 'ROOT_APP_URL' %}/startcluster/"></input>
+							<input id="url-writeconfig-2d" type="hidden" value="{% setting 'ROOT_APP_URL' %}/writeconfig_2d/"></input>
+							<input id="url-writeconfig-ray" type="hidden" value="{% setting 'ROOT_APP_URL' %}/writeconfig_ray/"></input>
+							<input id="url-writeconfig-ray-animation" type="hidden" value="{% setting 'ROOT_APP_URL' %}/writeconfig_ray_animation/"></input>
+							<input id="url-writeconfig-iso" type="hidden" value="{% setting 'ROOT_APP_URL' %}/writeconfig_iso/"></input>
+							<input id="url-writeconfig-flow" type="hidden" value="{% setting 'ROOT_APP_URL' %}/writeconfig_flow/"></input>
+							<input id="url-terminatecluster" type="hidden" value="{% setting 'ROOT_APP_URL' %}/terminatecluster/"></input>
+							<input id="leneles" type="hidden" value="0"></input>
+							<div class="appstop" id="app-status"></div>
+							<!-- End of Hidden inputs for request variables -->
+						</div>
+					</div>
+                </div>
+				<!--  End of Cloud Configuration -->
+				
+				<!-- Button Start Cluster -->
+				<div class="row">
+					<div class="col-sm-1"></div>
+					<div class="col-sm-10">
+						<a id="btn-startcluster" data-toggle="collapse" href="#collapseCloud" class="btn btn-success btn-lg btn-block disabled is-start">Start Cloud Cluster</a>
+					</div>
+					<div class="col-sm-1"></div>
+				</div>
+				<!-- End of Button Start Cluster -->
+				
+				<br/>
+				
+                <!-- Data Source -->
+                <div class="panel panel-default root-panel">
+					<div class="panel-heading">
+                        <h4 class="panel-title"><a data-toggle="collapse" href="#collapseDataSource" class="accordion-toggle">
+                            <i class="fa fa-database fa-lg"></i> Data Source</a>
+                        </h4>
+					</div>
+					<div id="collapseDataSource" class="panel-collapse collapse">
+						<div class="panel-body">
+							<div class="panel-group" id="panelgroup-datasource">
+								<!-- Select: File on Server -->
+								<div class="panel panel-default">
+									<div class="panel-heading">
+										<h4 class="panel-title">
+											<a data-toggle="collapse" data-parent="#panelgroup-datasource" href="#collapseDataServer">Data on Server</a>
+										</h4>
+									</div>
+									<div id="collapseDataServer" class="panel-collapse collapse in">
+										<div class="panel-body">
+											<div class="table-responsive">
+												<label>/root/data/</label>
+													<select id="sel-datafile">
+														<option value="0">-- Choose a file --</option>
+														<option value="dust2d.nc">dust2d.nc</option>
+														<option value="nmm2014.nc">nmm2014.nc</option>
+													</select>
+											</div>
+										</div>
+									</div>
+								</div>
+								<!-- End of Select: File on Server -->
+								
+								<!-- Input: Open DAP -->
+								<div class="panel panel-default">
+									<div class="panel-heading">
+										<h4 class="panel-title">
+											<a data-toggle="collapse" data-parent="#panelgroup-datasource" href="#collapseDataOpendap">OPeNDAP Server - NASA</a>
+										</h4>
+									</div>
+									<div id="collapseDataOpendap" class="panel-collapse collapse">
+										<div class="panel-body">
+											<!-- OpenDAP configuration -->
+											<!--
+											<div class="form-group">
+												<div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+													<label>Latitude</label>
+													<input class="form-control" autocomplete="off">
+												</div>
+											<div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+												<label>Longitude</label>
+												<input class="form-control" autocomplete="off">
+											</div>
+											<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+												<label>Time</label>
+												<input class="form-control" autocomplete="off">
+											</div>
+											<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+												<label>Parameter</label>
+												<input class="form-control" autocomplete="off">
+												<br/>
+												<button type="button" class="btn btn-warning btn-lg btn-block">Get Data</button>
+											</div>
+											-->
+											<!-- End of OpenDAP configuration -->
+										
+											<div class="form-group">
+												<label>Data URL:</label>
+												<input id="url-opendap" class="form-control" placeholder="Copy the URL and paste it here." autocomplete="off"><br/>
+												<button id="btn-getopendap" type="button" class="btn btn-warning btn-lg btn-block">Download Data</button>
+											</div>
+										</div>
+									</div>
+								</div>
+								<!-- End of Input: Open DAP -->
+								
+								<!-- File: User Upload -->
+								<div class="panel panel-default">
+									<div class="panel-heading">
+										<h4 class="panel-title">
+											<a data-toggle="collapse" data-parent="#panelgroup-datasource" href="#collapseDataUserUpload">Upload Data</a>
+										</h4>
+									</div>
+									<div id="collapseDataUserUpload" class="panel-collapse collapse">
+										<div class="panel-body">
+											<div class="form-group">
+												<input type="file">
+												<br/>
+												<button type="button" class="btn btn-warning btn-lg btn-block">Upload</button>
+											</div>
+										</div>
+									</div>
+								</div>
+								<!-- End of File: User Upload -->
+							</div>
+							
+							<!-- Button Load Data -->
+							<div class="row">
+								<div class="col-sm-1"></div>
+								<div class="col-sm-10">
+									<!-- Data Loaded Notification -->
+									<div class="alert alert-info alert-dismissable" id="alert-data-loaded" style="display:none;">
+										<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+										Data loaded successfully!
+									</div>
+									<!-- End of Data Loaded Notification -->
+									<a id="btn-loaddata" class="btn btn-success btn-lg btn-block is-no-data disabled">Load Data</a>
+								</div>
+								<div class="col-sm-1"></div>
+							</div>
+							<!-- End of Button Load Data -->
+						</div>
+					</div>
+                </div>				
+				<!-- End of Data Source -->
+            </div>
+			<!-- End of Right Side Panel -->
+			
+			<!-- CSRF token for sending request -->
+            <form action="" method="post">{% csrf_token %}</form>
+			<!-- End of CSRF token for sending request -->
+        </div>
+		<!-- End of Main Content -->
+
+        <!-- Bottom JavaScript -->
+        <!-- 3rd party JS -->
+        <script src="{% static '3rdparty/jquery-11.1.1/jquery.min.js' %}"></script>
+        <script src="{% static '3rdparty/jquery.cookie/jquery.cookie.js' %}"></script>
+        <script src="{% static '3rdparty/bootstrap-3.3.0/js/bootstrap.min.js' %}"></script>
+        <script src="{% static '3rdparty/bootstrap-3.3.0/js/ie10-viewport-bug-workaround.js' %}"></script>
+        <script src="{% static '3rdparty/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js' %}"></script>
+		<script src="{% static '3rdparty/bootstrap-treeview-1.2.0/bootstrap-treeview.min.js' %}"></script>
+        
+        <!-- World Wind JS -->
+        <script data-main="WWRemoteViz" src="{% static 'worldwind/require.js' %}"></script>
+    
+        <!-- Script for style -->
+        <script>
+            // color picker
+            $("#colorpicker-ray").colorpicker({format: 'rgb'});
+			
+			// enable button
+			function enable_button(btn){
+				if ($(btn).hasClass("disabled"))
+				{
+					$(btn).removeClass("disabled");
+				}
+			}
+			
+			// disable button
+			function disable_button(btn){
+				if (!$(btn).hasClass("disabled"))
+				{
+					$(btn).addClass("disabled");
+				}
+			}
+			
+			// check cloud config
+			function check_cloud_config_fields(){
+				var is_ok = false;
+				if ((!($("#sel-region option:selected").val()==0)) && (!($("#sel-machineconf option:selected").val()==0)) && (!($("#sel-numgpu option:selected").val()==0)))
+				{is_ok = true;}	
+				if (is_ok)
+				{enable_button("#btn-startcluster");}
+				else
+				{disable_button("#btn-startcluster");}
+			}
+			
+			// when change any cloud config select, check for enable or disable start cluster button
+			$("#sel-region").change(function(){
+				check_cloud_config_fields();
+			});
+			$("#sel-machineconf").change(function(){
+				check_cloud_config_fields();
+			});
+			$("#sel-numgpu").change(function(){
+				check_cloud_config_fields();
+			});
+			
+			// load data on server under dir: /root/data/
+			function load_data_on_server(){
+				console.log("Data on server loaded successfully!");
+				$("#collapseDataSource").collapse('show');
+			}
+        
+            /* launch gpu instance */
+            function startcluster(){
+                var csrftoken = $.cookie('csrftoken');
+                var url= $("#url-startcluster").val();
+				var gpuregion = $("#sel-region").val();
+				var gputype = $("#sel-machineconf").val();
+				var gpunum = $("#sel-numgpu").val();
+				$.ajax({
+					url : url, // the endpoint
+					type : "POST", // http method
+					data : {
+						csrfmiddlewaretoken: csrftoken,
+						gpuregion: gpuregion,
+						gputype: gputype,
+						gpunum: gpunum,
+					}, // data sent with the delete request
+					success : function(json) {
+//						var var2dlist = jQuery.parseJSON(json.var2dlist);
+						$("#btn-startcluster").removeClass("btn-warning").addClass("btn-danger")
+						.removeClass("is-start").addClass("is-terminate")
+						.html('<i class="fa fa-times-circle fa-2x"></i> <h3>Terminate Cloud Cluster</h3>');
+						console.log("Cluster launched successfully!");
+						load_data_on_server();
+					},
+					error : function(xhr,errmsg,err) {
+						console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+					}
+				});
+            }
+			
+			// un-load data on server after server is terminated
+			function unload_data_on_server(){
+				console.log("Data on server un-loaded successfully!");
+				$("#collapseDataSource").collapse('hide');
+			}
+            
+            /* terminate gpu instance */
+            function terminatecluster(){
+                var csrftoken = $.cookie('csrftoken');
+                var url=$("#url-terminatecluster").val();
+				var gpuregion = $("#sel-region").val();
+				var gputype = $("#sel-machineconf").val();
+				var gpunum = $("#sel-numgpu").val();
+				$.ajax({
+					url : url, // the endpoint
+					type : "POST", // http method
+					data : {
+						csrfmiddlewaretoken: csrftoken,
+						gpuregion: gpuregion,
+						gputype: gputype,
+						gpunum: gpunum,
+					}, // data sent with the delete request
+					success : function(json) {
+//						var var2dlist = jQuery.parseJSON(json.var2dlist);
+						$("#btn-startcluster").removeClass("btn-warning").addClass("btn-success")
+						.removeClass("is-terminate").addClass("is-start")
+						.html('Start Cloud Cluster');
+						$("#collapseCloud").collapse('show');
+						console.log("Cluster terminated successfully!");
+						unload_data_on_server();
+					},
+					error : function(xhr,errmsg,err) {
+						console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+					}
+				});
+            }
+            
+			// button click event for starting and terminating cluster
+            $("#btn-startcluster").click(function(){
+				if ($(this).hasClass("is-start"))
+				{
+					$(this).removeClass("btn-success").addClass("btn-warning").html('<i class="fa fa-refresh fa-spin fa-2x fa-fw"></i> <h3>Launching Cluster</h3>');
+					startcluster();
+				}
+				else if ($(this).hasClass("is-terminate"))
+				{
+					$(this).removeClass("btn-danger").addClass("btn-warning").html('<i class="fa fa-refresh fa-spin fa-2x fa-fw"></i> <h3>Terminating Cluster</h3>');
+					terminatecluster();
+				}
+			});
+			
+			// check if file is selected to enable load data button
+			$("#sel-datafile").change(function(){
+				if (!($("#sel-datafile option:selected").val()==0))
+				{enable_button("#btn-loaddata");}
+				else
+				{disable_button("#btn-loaddata");}
+			});
+			
+			// load selected data to browser by loading 2D and 3D variables
+			function loaddata(){
+				var csrftoken = $.cookie('csrftoken');
+				var url=$("#url-loaddata").val();
+				var datafile = $("#sel-datafile").val();
+				var gpuregion = $("#sel-region").val();
+				$.ajax({
+					url : url, // the endpoint
+					type : "POST", // http method
+					data : {
+						csrfmiddlewaretoken: csrftoken,
+						datafile: datafile,
+						gpuregion: gpuregion,
+					}, // data sent with the delete request
+					success : function(json) {
+						var var2dlist = jQuery.parseJSON(json.var2dlist);
+						var var3dlist = jQuery.parseJSON(json.var3dlist);
+						//load 2d var list
+						$("#var-seq").empty();
+						$.each(var2dlist,function(index,value){
+							$("#var-seq").append($('<option>', { 
+							value: value.split(":")[0],
+							text : value 
+							}));
+						});
+						
+						//load 3d var lsit
+						$("#var-seq-3d-ray").empty();
+						$.each(var3dlist,function(index,value){
+							$("#var-seq-3d-ray").append($('<option>', { 
+							value: value.split(":")[0],
+							text : value 
+							}));
+						});
+						$("#var-seq-3d-iso").empty();
+						$.each(var3dlist,function(index,value){
+							$("#var-seq-3d-iso").append($('<option>', { 
+							value: value.split(":")[0],
+							text : value 
+							}));
+						});
+						$("#var-seq-3d-flow").empty();
+						$.each(var3dlist,function(index,value){
+							$("#var-seq-3d-flow").append($('<option>', { 
+							value: value.split(":")[0],
+							text : value 
+							}));
+						});
+						
+						$("#btn-loaddata").removeClass("btn-warning").addClass("btn-success")
+						.removeClass("is-no-data").addClass("is-data-loaded")
+						.html('Load Data');
+						
+						$('#alert-data-loaded').show();
+						
+						// enable all vis controls
+						$(".vis-control").removeClass("disabled");
+						$("#2d-opacity").removeAttr('disabled');
+					
+						console.log("data loaded successfully!");
+						$("#collapseLayerControl").collapse('show');
+						$("#collapseDataList").collapse('show');
+						
+					/*
+						var var2dlist = jQuery.parseJSON(json.var2dlist);
+						var var3dlist = jQuery.parseJSON(json.var3dlist);
+						var varlatlons = jQuery.parseJSON(json.varlatlons);
+						var vartimes = jQuery.parseJSON(json.vartimes);
+						//load 2d var list
+						$("#var-seq").empty();
+						$.each(var2dlist,function(index,value){
+							$("#var-seq").append($('<option>', { 
+							value: value.split(":")[0],
+							text : value 
+							}));
+						});
+						//load 3d var lsit
+						$("#var-seq-3d-ray").empty();
+						$.each(var3dlist,function(index,value){
+							$("#var-seq-3d-ray").append($('<option>', { 
+							value: value.split(":")[0],
+							text : value 
+							}));
+						});
+						$("#var-seq-3d-iso").empty();
+						$.each(var3dlist,function(index,value){
+							$("#var-seq-3d-iso").append($('<option>', { 
+							value: value.split(":")[0],
+							text : value 
+							}));
+						});
+						$("#var-seq-3d-flow").empty();
+						$.each(var3dlist,function(index,value){
+							$("#var-seq-3d-flow").append($('<option>', { 
+							value: value.split(":")[0],
+							text : value 
+							}));
+						});
+
+						//load 2d surface img
+						$("#var-seq option").each(function(){
+							var var2dname = this.value;
+							var surfaceImage = new WorldWind.SurfaceImage(new WorldWind.Sector(varlatlons[0],varlatlons[1],varlatlons[2],varlatlons[3]),scImgPath+"2d/"+var2dname+"_0_a.png");
+							var surfaceImageLayer = new WorldWind.RenderableLayer();
+							surfaceImageLayer.displayName = "2D image "+var2dname;
+							surfaceImageLayer.addRenderable(surfaceImage);
+							surfaceImageLayer.enabled = false;
+							surfaceImages.push(surfaceImageLayer);
+							wwd.addLayer(surfaceImageLayer);
+						});
+
+											// load 2d surdace image animation
+											time_labels = [];
+											$.each(vartimes,function(index,value){
+							time_labels.push(value);
+						});
+						$("#range-2d-animation-text").html(vartimes[0]);
+						$("#var-seq option").each(function(){
+							var var2dname = this.value;
+							var surfaceImage2DAnimation = [];
+							for (var t = 0; t < vartimes.length; t++) {
+								var surfaceImage = new WorldWind.SurfaceImage(new WorldWind.Sector(varlatlons[0],varlatlons[1],varlatlons[2],varlatlons[3]),scImgPath+"2d/"+var2dname+"_"+t+"_a.png");
+								var surfaceImageLayer = new WorldWind.RenderableLayer();
+								surfaceImageLayer.displayName = "2D image animation " + var2dname + " " + t;
+								surfaceImageLayer.addRenderable(surfaceImage);
+								surfaceImageLayer.enabled = false;
+								surfaceImage2DAnimation.push(surfaceImageLayer);
+								wwd.addLayer(surfaceImageLayer);
+							}
+							surfaceImages2DAnimation.push(surfaceImage2DAnimation);
+						});
+
+						$("#leneles").val(json.leneles);
+					*/
+					},
+					error : function(xhr,errmsg,err) {
+						console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+					}
+				});
+			}
+			
+			// button click event for loading selected data
+			$("#btn-loaddata").click(function(){
+				if ($(this).hasClass("is-no-data"))
+				{
+					$(this).removeClass("btn-success").addClass("btn-warning").html('<i class="fa fa-spinner fa-spin fa-lg fa-fw"></i> Loading Data');
+					loaddata();
+				}
+			});
+
+            
+            for (var t = 0; t < 20; t++) {
+                $("#sel-3d-starttime").append($('<option>', { 
+                    value: t,
+                    text : t 
+                }));
+                $("#sel-3d-endtime").append($('<option>', { 
+                    value: t,
+                    text : t 
+                }));
+            }
+
+            $("#sel-datafile").change(function(){
+                if($("#sel-datafile").val()=="dust2d.nc")
+                {
+                    if(!$("#check-layer-flow-animation").is(':disabled'))
+                    {
+                        $("#check-layer-flow-animation").prop('disabled',true);
+                    }
+                    if(!$("#sel-colorramp").is(':disabled'))
+                    {
+                        $("#sel-colorramp").prop('disabled',true);
+                    }
+                    if(!$("#sel-colorclass").is(':disabled'))
+                    {
+                        $("#sel-colorclass").prop('disabled',true);
+                    }
+                }
+                else if($("#sel-datafile").val()=="nmmnew.nc" || $("#sel-datafile").val()=="nmm2014.nc" || $("#sel-datafile").val()=="dustwind.nc")
+                {
+                    if($("#check-layer-flow-animation").is(':disabled'))
+                    {
+                        $("#check-layer-flow-animation").prop('disabled',false);
+                    }
+                    if($("#sel-colorramp").is(':disabled'))
+                    {
+                        $("#sel-colorramp").prop('disabled',false);
+                    }
+                    if($("#sel-colorclass").is(':disabled'))
+                    {
+                        $("#sel-colorclass").prop('disabled',false);
+                    }
+                }
+            });
+            /*
+            $("#btn-timeplay").click(function(){"btn btn-success btn-circle"
+              if($(this).hasClass("btn-success")){
+                $(this).attr({class:"btn btn-warning btn-circle"});
+                $(this).html('<i class="fa fa-pause fa-lg"></i>');
+              }
+              else{
+                $(this).attr({class:"btn btn-success btn-circle"});
+                $(this).html('<i class="fa fa-play fa-lg"></i>');
+              }
+            });
+            */
+			
+			// Data List 
+			function getTree(){
+				var tree = [
+					{
+						text: " Base Layer",
+						selectable: false,
+						state: {
+							checked: true,
+						},
+						nodes: [
+							{
+								text: " Blue Marble",
+								selectable: false,
+								state: {
+								checked: true,
+								},
+							},
+							{
+								text: " Blue Marble & Landsat",
+								selectable: false,
+								state: {
+								checked: false,
+								},
+							},
+							{
+								text: " Blue Aerial with Labels",
+								selectable: false,
+								state: {
+								checked: false,
+								},
+							},
+						]
+					},
+					{
+						text: " Data Layer",
+						selectable: false,
+						state: {
+							checked: true,
+						},
+						nodes: [
+							{
+								text: " dust2d.nc",
+								selectable: false,
+								state: {
+								checked: true,
+								},
+							},
+							/*
+							{
+								text: " nmm2014.nc",
+								selectable: false,
+								state: {
+								checked: false,
+								},
+							},
+							*/
+						]
+					}
+				];
+				return tree;
+			}
+			$('#treeDataList').treeview({
+				data: getTree(),
+				showBorder: false,
+				showCheckbox: true,
+			});
+        </script>
+    </body>
+</html>

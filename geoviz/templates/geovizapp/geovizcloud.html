@@ -1,0 +1,226 @@
+{% load staticfiles %}
+{% load custom_filter %}{% load custom_tag %}
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!--
+    <link rel="shortcut icon" href='{% static "img/du_favicon.ico" %}'>
+    -->
+
+    <title>Remote Visualization</title>
+    <!-- 3rd party CSS -->
+    <link href='{% static "3rdparty/bootstrap-3.3.0/css/bootstrap.min.css" %}' rel="stylesheet"/>
+    <link href='{% static "3rdparty/font-awesome-4.2.0/css/font-awesome.min.css" %}' rel="stylesheet"/>
+
+    <!-- Base CSS -->
+    <link href='{% static "css/main.css" %}' rel="stylesheet"/>
+    <link href='{% static "css/base.css" %}' rel="stylesheet"/>
+    
+    <!-- World Wind CSS -->
+    <link href='{% static "worldwind/Examples.css" %}' rel="stylesheet"/>
+    <link href='{% static "worldwind/LayerManager/LayerManager.css" %}' rel="stylesheet"/>
+    
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src='{% static "3rdparty/html5shiv-3.7.2/html5shiv.min.js" %}'></script>
+        <script src='{% static "3rdparty/respond.js/respond.min.js" %}'></script>
+    <![endif]-->    
+    <style>
+        #requestform {margin-top: 100px;}
+    </style>
+    </head>
+
+    <body onbeforeunload="stop()" onunload="stop()" class="page">
+        <nav id="banner" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <!--<img src='{% static "img/du_logo.png" %}' class="navbar-logo">-->
+                    <a class="navbar-brand" href="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    GeoViz &nbsp;-&nbsp; A Cloud-enabled Remote Visualization Tool for Distributed Time-varying Climate Data Analytics</a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="row">          
+            <div class="col-sm-2 col-md-2 col-lg-2"></div>
+            <div class="col-sm-8 col-md-8 col-lg-8" id="requestform">
+                <div class="well">
+                    <p>Please note that currently we only accept the requests of Amazon GPU instances from journal reviewers.</p>
+                    <p>If you are anonymous referee, please fill out the form below to submit a request for GPU instances.</p>
+                </div>
+                <br/>
+                <div class="alert alert-danger" id="alert-msg">
+                    Please correct the error below
+                </div>
+                <h1>Request Form</h1>
+                <hr>
+                <form action="" method="post">{% csrf_token %}
+                    <div class="form-group">
+                        <div class="form-group">
+                            <label for="id_journal">Name of journal you are reviewing:</label>
+                            <div class="alert alert-danger" id="alert-journal">
+                                This field is required.
+                            </div>
+                            <input id="id_journal" maxlength="500" name="journal" type="text" class="form-control">
+                            <br/>
+                            <label for="id_email">Email address to receive a link to access GeoViz application:</label>
+                            <div class="alert alert-danger" id="alert-email">
+                                This field is required.
+                            </div>
+                            <input id="id_email" maxlength="254" name="email" type="email" class="form-control">
+                            <br/>
+                            <label for="id_gpu_num">Number of GPU instances you are requesting:</label>
+                            <div class="alert alert-danger" id="alert-gpu_num">
+                                This field is required.
+                            </div>
+                            <select id="id_gpu_num" name="gpu_num" class="form-control">
+                                <option value="" selected="selected">---------</option>
+                                {% for c in gpu_choices %}
+                                    <option value="{{c}}">{{c}}</option>
+                                {% endfor %}
+                            </select>
+                            <br/>
+                            <label for="id_schedule_time">Scheduled time to launch the GPU cluster:</label>
+                            <div class="alert alert-warning">
+                                We will regularly check email between 12pm-4pm Eastern Time. Any time scheduled for before 12pm EST will be pushed to the next day.
+                            </div>
+                            <div class="alert alert-danger" id="alert-schedule_time">
+                                This field is required.
+                            </div>
+                            <p class="datetime">
+                            Date(EST) (mm/dd/yyyy): <input id="id_schedule_time_date" name="schedule_time_date" maxlength="10" size="10" type="text" class="form-control" placeholder="mm/dd/yyyy">
+                            Time(EST) (hh:mm): <input id="id_schedule_time_time" name="schedule_time_time" maxlength="5" size="5" type="text" class="form-control" placeholder="hh:mm">
+                            <br/>
+                            <label for="id_request_hour">Total hours of accessing the application:</label>
+                            <div class="alert alert-danger" id="alert-request_hour">
+                                This field is required.
+                            </div>
+                            <select id="id_request_hour" name="request_hour" class="form-control">
+                                <option value="" selected="selected">---------</option>
+                                {% for c in hour_choices %}
+                                    <option value="{{c}}">{{c}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <button id="btn-requestcluster" type="button" class="btn btn-success btn-lg btn-block" data-toggle="modal">Request Cloud Cluster</button>
+                    <input id="url-requestcluster" type="hidden" value="{% setting 'ROOT_APP_URL' %}/requestcluster/"></input>
+                </form>
+                <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                <h4 class="modal-title" id="myModalLabel">GeoViz Cloud GPU</h4>
+                            </div>
+                            <div class="modal-body">
+                                You will soon receive an email confirmation from GeoViz team about your request.<br/>
+                                The GPU cloud cluster (<span id="urlgpunum"></span> instances) you requested will be scheduled to launch at your preferred date and time.<br/>
+                                We will send you another emial notification when the GPU cluster is ready for use.<br/>
+                                Please follow the link and instructions in the email to access the application.
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                        <!-- /.modal-content -->
+                    </div>
+                    <!-- /.modal-dialog -->
+                </div>
+            </div>
+            <div class="col-sm-2 col-md-2 col-lg-2"></div>
+        </div><!-- /.container -->
+
+
+        <!-- Bottom JavaScript -->
+        <!-- 3rd party JS -->
+        <script src="{% static '3rdparty/jquery-11.1.1/jquery.min.js' %}"></script>
+        <script src='{% static "3rdparty/jquery.cookie/jquery.cookie.js" %}'></script>
+        <script src="{% static '3rdparty/bootstrap-3.3.0/js/bootstrap.min.js' %}"></script>
+        <script src="{% static '3rdparty/bootstrap-3.3.0/js/ie10-viewport-bug-workaround.js' %}"></script>
+    
+        <!-- Script for style -->
+        <script>
+            $(".alert-danger").hide();
+            function requestcluster(){
+                var error = false;
+                $(".alert-danger").hide();
+                
+                var csrftoken = $.cookie('csrftoken');
+                var url=$("#url-requestcluster").val();
+                
+                var journal = $("#id_journal").val();
+                if (journal == ""){
+                    error = true;
+                    $("#alert-journal").show();
+                }
+                var email = $("#id_email").val();
+                if (email == ""){
+                    error = true;
+                    $("#alert-email").show();
+                }
+                var gpunum = $("#id_gpu_num").val();
+                if (gpunum == ""){
+                    error = true;
+                    $("#alert-gpu_num").show();
+                }
+                var hours = $("#id_request_hour").val();
+                if (hours == ""){
+                    error = true;
+                    $("#alert-request_hour").show();
+                }
+                var sdate = $("#id_schedule_time_date").val();
+                var stime = $("#id_schedule_time_time").val();
+                if (sdate == "" || stime == ""){
+                    error = true;
+                    $("#alert-schedule_time").show();
+                }
+                if (!error){
+                    $.ajax({
+                        url : url, // the endpoint
+                        type : "POST", // http method
+                        data : {
+                            csrfmiddlewaretoken: csrftoken,
+                            journal: journal,
+                            email: email,
+                            gpunum: gpunum,
+                            hours: hours,
+                            sdate: sdate,
+                            stime: stime,
+                        }, // data sent with the delete request
+                        success : function(json) {
+                            console.log("email sent!");
+                            console.log("request for "+json.gpunum+" gpu instances.");
+                            console.log("return url:  http://52.26.239.116/geoviz/geoviz/launchcluster/"+json.gpunum+"-"+json.secretkey+"/");
+                            
+                            $("#btn-requestcluster").prop('disabled', true);
+                            $("#secretkey").html(json.secretkey);
+                            $("#secretgpunum").html(json.gpunum);
+                            $("#urlgpunum").html(json.gpunum);
+                            $("#myModal").css("top","100px");
+                            $("#myModal").modal('toggle');
+                            $("#myModal").modal('show');
+                        },
+                        error : function(xhr,errmsg,err) {
+                            console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                        }
+                    });
+                }
+                else {
+                    $("#alert-msg").show();
+                }
+            }
+            $("#btn-requestcluster").click(function(){requestcluster();});
+        </script>
+    </body>
+</html>
