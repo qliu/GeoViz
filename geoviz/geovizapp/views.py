@@ -27,7 +27,7 @@ from geovizapp.models import *
 #from starcluster.cluster import ClusterManager
 
 # import for NetCDF
-from netCDF4 import Dataset, num2date
+#from netCDF4 import Dataset, num2date
 
 # import for merge image
 from PIL import Image
